@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,7 +22,8 @@ class TaskController extends Controller
     public function index()
     {
         $user = auth()->user();
-        return response()->json([$user->tasks], 201);
+        $tasks = TaskResource::collection($user->tasks);
+        return response()->json($tasks, 201);
     }
 
     /**
@@ -30,6 +32,7 @@ class TaskController extends Controller
     public function show(string $id)
     {
         $task = Task::find($id);
+        $task = new TaskResource($task);
         if ($task) {
             return response()->json($task);
         }
@@ -40,18 +43,17 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $user = auth()->user();
         $request->validate([
             'title' => 'required|string|min:3',
             'description' => 'string|min:5',
         ]);
 
-        $task = $user->tasks()->create([
+        $task = $request->user()->tasks()->create([
             'title' => $request->title,
             'description' => $request->description,
             'status' => 'to_do',
         ]);
-
+        $task = new TaskResource($task);
         if ($task) {
             return response()->json([
                 'status' => 'success',
@@ -87,7 +89,7 @@ class TaskController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Task updated successfully',
-                'task' => $task->refresh(),
+                'task' => new TaskResource($task->refresh()),
             ], 202);
         return response()->json([
             'error' => 'error',
@@ -105,7 +107,7 @@ class TaskController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Task deleted successfully',
-                'task' => $task,
+                'task' => new TaskResource($task),
             ]);
         }
         return response()->json([

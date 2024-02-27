@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\TaskResource;
 use App\Models\Task;
 
 class CompleteTaskController extends Controller
@@ -19,7 +20,7 @@ class CompleteTaskController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Task marked done with success.',
-                'task' => $task->refresh(),
+                'task' => new TaskResource($task->refresh()),
             ], 202);
         return response()->json([
             'status' => 'error',
