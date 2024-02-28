@@ -34,7 +34,7 @@ class TaskController extends Controller
     {
         $user = auth()->user();
         $tasks = TaskResource::collection($user->tasks);
-        return response()->json($tasks, 201);
+        return response()->json(['data' => $tasks], 201);
     }
 
     /**
@@ -142,7 +142,7 @@ class TaskController extends Controller
         $data = $request->validate([
             'title' => 'string|min:3',
             'description' => 'string|min:5',
-            'status' => ['required', 'string', Rule::in(['to_do', 'in_progress', 'done'])],
+            'status' => ['string', Rule::in(['to_do', 'in_progress', 'done'])],
         ]);
         $is_updated = $task->update($data);
         if ($is_updated)
