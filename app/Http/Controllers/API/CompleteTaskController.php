@@ -25,23 +25,26 @@ use App\Models\Task;
  */
 class CompleteTaskController extends Controller
 {
-    function __invoke(Task $task)
+    function __invoke(string $id)
     {
+        $task = Task::find($id);
         if (!$task)
             return response()->json([
                 'status' => 'error',
                 'message' => 'Task not found',
             ], 404);
-
-        if ($task->update(['status' => "done"]))
+        try {
+            $task->update(['status' => 'done']);
             return response()->json([
                 'status' => 'success',
                 'message' => 'Task marked done with success.',
                 'task' => new TaskResource($task->refresh()),
             ], 202);
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Error withing markeing the task completed.',
-        ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating the task',
+            ], 500);
+        }
     }
 }
