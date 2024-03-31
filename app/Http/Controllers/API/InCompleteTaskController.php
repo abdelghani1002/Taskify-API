@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 
 /**
  * @OA\Post(
- *     path="/api/tasks/complete/{taskId}",
+ *     path="/api/tasks/incomplete/{taskId}",
  *     summary="Mark a task as done",
  *     security={{"bearerAuth":{}}},
  *     @OA\Parameter(
@@ -24,7 +24,7 @@ use Illuminate\Http\Request;
  *     @OA\Response(response="500", description="Error marking the task as done")
  * )
  */
-class CompleteTaskController extends Controller
+class InCompleteTaskController extends Controller
 {
     function __invoke(Request $request, string $id)
     {
@@ -35,11 +35,11 @@ class CompleteTaskController extends Controller
                 'message' => 'Task not found',
             ], 404);
         try {
-            $task->update(['status' => 'done']);
+            $task->update(['status' => 'to_do']);
             $tasks = TaskResource::collection($request->user()->tasks->sortByDesc('created_at'));
             return response()->json([
                 'status' => true,
-                'message' => 'Task marked done with success.',
+                'message' => 'Task marked todo with success.',
                 'tasks' => $tasks,
             ], 202);
         } catch (\Exception $e) {

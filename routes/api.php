@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\Auth\AuthController;
 use App\Http\Controllers\API\CompleteTaskController;
+use App\Http\Controllers\API\InCompleteTaskController;
 use App\Http\Controllers\API\TaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -30,3 +31,4 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::apiResource("tasks", TaskController::class);
 Route::post('tasks/complete/{task}', CompleteTaskController::class)->middleware('auth:api');
+Route::post('tasks/incomplete/{task}', InCompleteTaskController::class)->middleware('auth:api');

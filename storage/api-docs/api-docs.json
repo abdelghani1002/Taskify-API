@@ -33,7 +33,7 @@
                     "200": {
                         "description": "Login successful"
                     },
-                    "401": {
+                    "403": {
                         "description": "Invalid credentials"
                     }
                 }
@@ -194,8 +194,7 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "title",
-                                    "description"
+                                    "title"
                                 ],
                                 "properties": {
                                     "title": {
@@ -205,6 +204,10 @@
                                     "description": {
                                         "type": "string",
                                         "minLength": 5
+                                    },
+                                    "deadline": {
+                                        "type": "string",
+                                        "format": "date-time"
                                     }
                                 },
                                 "type": "object"
@@ -298,6 +301,10 @@
                                         "type": "string",
                                         "minLength": 5
                                     },
+                                    "deadline": {
+                                        "type": "string",
+                                        "format": "date-time"
+                                    },
                                     "status": {
                                         "type": "string",
                                         "enum": [
@@ -388,6 +395,10 @@
                     },
                     "status": {
                         "type": "string"
+                    },
+                    "deadline": {
+                        "type": "string",
+                        "format": "date-time"
                     },
                     "created_at": {
                         "type": "string",

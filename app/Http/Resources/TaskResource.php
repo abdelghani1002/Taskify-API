@@ -12,6 +12,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="title", type="string"),
  *     @OA\Property(property="description", type="string"),
  *     @OA\Property(property="status", type="string"),
+ *     @OA\Property(property="deadline", type="string", format="date-time"),
  *     @OA\Property(property="created_at", type="string", format="date-time"),
  *     @OA\Property(property="updated_at", type="string", format="date-time"),
  * )
@@ -29,6 +30,7 @@ class TaskResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
+            'deadline' => $this->deadline,
             'status' => $this->status,
         ];
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 /**
@@ -33,8 +34,8 @@ class TaskController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $tasks = TaskResource::collection($user->tasks);
-        return response()->json(['data' => $tasks], 201);
+        $tasks = TaskResource::collection($user->tasks->sortByDesc('created_at'));
+        return response()->json(['tasks' => $tasks]);
     }
 
     /**
@@ -59,10 +60,15 @@ class TaskController extends Controller
         $task = new TaskResource($task);
         if ($task) {
             return response()->json($task);
+        } else {
+            return response()->json([
+                'error' => 'error',
+                'messgae' => 'Task not found!',
+            ], 404);
         }
     }
 
-     /**
+    /**
      * @OA\Post(
      *     path="/api/tasks",
      *     summary="Create a new task",
@@ -70,9 +76,10 @@ class TaskController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"title", "description"},
+     *             required={"title"},
      *             @OA\Property(property="title", type="string", minLength=3),
      *             @OA\Property(property="description", type="string", minLength=5),
+     *             @OA\Property(property="deadline", type="string", format="date-time")
      *         )
      *     ),
      *     @OA\Response(response="201", description="Task created successfully", @OA\JsonContent(ref="#/components/schemas/TaskResource")),
@@ -81,27 +88,41 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'title' => 'required|string|min:3',
             'description' => 'string|min:5',
-        ]);
+            'deadline' => 'date|after:now',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $request->errors()
+            ], 400);
+        }
 
         $task = $request->user()->tasks()->create([
             'title' => $request->title,
             'description' => $request->description,
+            'deadline' => $request->deadline,
             'status' => 'to_do',
         ]);
         $task = new TaskResource($task);
         if ($task) {
+            $tasks = TaskResource::collection($request->user()->tasks->sortByDesc('created_at'));
             return response()->json([
-                'status' => 'success',
+                'status' => true,
                 'message' => 'Task created successfully',
-                'task' => $task,
+                'tasks' => $tasks,
             ], 201);
         }
 
         return response()->json([
-            'error' => 'error',
+            'status' => true,
             'message' => 'Error withing creating the task',
         ], 400);
     }
@@ -123,6 +144,7 @@ class TaskController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="title", type="string", minLength=3),
      *             @OA\Property(property="description", type="string", minLength=5),
+     *      *      @OA\Property(property="deadline", type="string", format="date-time"),
      *             @OA\Property(property="status", type="string", enum={"to_do", "in_progress", "done"}),
      *         )
      *     ),
@@ -134,28 +156,52 @@ class TaskController extends Controller
     public function update(Request $request, string $id)
     {
         $task = Task::find($id);
-        if (!$task){
+        if (!$task) {
             return response()->json([
-                'error' => 'error',
+                'status' => false,
                 'message' => 'Task not found',
             ], 404);
         }
-        $data = $request->validate([
-            'title' => 'string|min:3',
+        $rules = [
+            'title' => 'required|string|min:3',
             'description' => 'string|min:5',
-            'status' => ['string', Rule::in(['to_do', 'in_progress', 'done'])],
-        ]);
-        $is_updated = $task->update($data);
-        if ($is_updated)
+            'deadline' => 'date|after:now',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'Task updated successfully',
-                'task' => new TaskResource($task->refresh()),
-            ], 202);
-        return response()->json([
-            'error' => 'error',
-            'message' => 'Error withing updating the task',
-        ], 400);
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ]);
+        }
+        try {
+            $is_updated = $task->update([
+                'title' => $request->title,
+                'description' => $request->description,
+                'deadline' => $request->deadline
+            ]);
+
+            if ($is_updated) {
+                $tasks = TaskResource::collection($request->user()->tasks->sortByDesc('created_at'));
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Task updated successfully',
+                    'tasks' => $tasks,
+                ], 202);
+            }
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating the task',
+            ], 400);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error updating the task',
+            ], 400);
+        }
     }
 
     /**
@@ -174,16 +220,17 @@ class TaskController extends Controller
      *     @OA\Response(response="404", description="Task not found"),
      * )
      */
-    public function destroy(string $id)
+    public function destroy(Request $request ,string $id)
     {
         $task = Task::find($id);
-        if ($task){
+        if ($task) {
             $task->delete();
+            $tasks = TaskResource::collection($request->user()->tasks->sortByDesc('created_at'));
             return response()->json([
                 'status' => 'success',
                 'message' => 'Task deleted successfully',
-                'task' => new TaskResource($task),
-            ]);
+                'tasks' => $tasks,
+            ], 200);
         }
         return response()->json([
             'status' => 'error',

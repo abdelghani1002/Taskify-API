@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use phpDocumentor\Reflection\PseudoTypes\True_;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -35,28 +37,38 @@ class AuthController extends Controller
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Response(response="200", description="Login successful"),
-     *     @OA\Response(response="401", description="Invalid credentials")
+     *     @OA\Response(response="403", description="Invalid credentials")
      * )
      */
     public function login(Request $request)
     {
-        $request->validate([
+        $rules = [
             'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
+            'password' => 'required|string|min:8',
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        // check if there is any errors returned
+        if($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid inputs',
+                'errors' => $validator->errors(),
+            ]);
+        }
         $credentials = $request->only('email', 'password');
 
         $token = JWTAuth::attempt($credentials);
+
         if (!$token) {
             return response()->json([
-                'status' => 'error',
+                'status' => false,
                 'message' => 'Invalid credentials',
-            ], 401);
+            ]);
         }
 
         $user = Auth::user();
         return response()->json([
-            'status' => 'success',
+            'status' => true,
             'message' => 'Login successful',
             'user' => $user,
             'authorisation' => [
@@ -97,11 +109,19 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6',
         ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors(),
+            ]);
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -122,8 +142,8 @@ class AuthController extends Controller
             ]);
         return response()->json([
             'status' => 'error',
-            'message' => 'Validation errors',
-        ], 422);
+            'message' => 'Server error',
+        ], 500);
     }
 
     /**
@@ -139,7 +159,7 @@ class AuthController extends Controller
     {
         JWTAuth::invalidate(JWTAuth::getToken());
         return response()->json([
-            'status' => 'success',
+            'status' => true,
             'message' => 'Logout successful',
         ]);
     }
