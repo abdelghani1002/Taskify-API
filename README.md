@@ -1,9 +1,3 @@
----
-runme:
-  id: 01HW2JXZ7B34QT347Z5M53ZSKX
-  version: v3
----
-
 <p align="center">
     <h1 align="center">TASKIFY-API</h1>
 </p>
@@ -57,6 +51,29 @@ composer install
 npm install
 ```
 
+4. Generate key
+
+```sh {"id":"01HW2RY4BB9S5V0EY8EQ6WA9MG"}
+php artisan key:generate
+```
+
+5. Setup .env file:
+
+```sh {"id":"01HW2SCQPD7HE2VPQNQ79RFFFQ"}
+cp .env.example .env
+```
+
+6. Setup database
+
+```sh {"id":"01HW2SFHYEMZ4KPX2G61GPE0H5"}
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE="DB name"
+DB_USERNAME="username"
+DB_PASSWORD="password"
+```
+
 ### 🤖 Running Taskify-API
 
 Use the following command to run Taskify-API:
@@ -77,7 +94,6 @@ Contributions are welcome! Here are several ways you can contribute:
     <summary>Contributing Guidelines</summary>
 
 1. **Fork the Repository**: Start by forking the project repository to your GitHub account.
-
 2. **Clone Locally**: Clone the forked repository to your local machine using a Git client.
 
 ```sh {"id":"01HW2JXZ5GX342781ZMZC2X4NJ"}
@@ -91,7 +107,6 @@ git checkout -b new-feature-x
 ```
 
 4. **Make Your Changes**: Develop and test your changes locally.
-
 5. **Commit Your Changes**: Commit with a clear message describing your updates.
 
 ```sh {"id":"01HW2JXZ5GX342781ZN1ZNDHRJ"}
